@@ -1,0 +1,71 @@
+# mise is the single source of truth for the toolchain.
+# Exact resolved versions are recorded in mise.lock (committed).
+min_version = "2026.7.18" # refuse to run with an older mise
+
+[settings]
+lockfile = true # write mise.lock for reproducibility
+
+[tools]
+uv = "0.12"
+ruff = "0.16"
+# Fast-moving security tooling and the hook runner — churn is expected, so track latest.
+gitleaks = "latest"
+prek = "latest"        # fast Rust drop-in for pre-commit
+osv-scanner = "latest"
+
+[env]
+UV_PROJECT_ENVIRONMENT = ".venv" # keep the venv at the repo root
+# The package itself reads no secrets; this is here so a local .env still works.
+_.file = [".env", ".env.local"]
+
+[tasks.setup]
+description = "Cold start: toolchain, frozen deps, git hooks, then verify"
+run = [
+  "mise install",
+  "uv sync --frozen",
+  "prek install",
+  "prek install -t pre-push",
+  "mise run check",
+]
+
+[tasks.install]
+description = "Dependency sync + hook install (no verify)"
+run = ["uv sync --frozen", "prek install", "prek install -t pre-push"]
+
+[tasks.lint]
+description = "Lint (ruff, no writes)"
+run = "ruff check"
+
+[tasks.fmt]
+description = "Format in place (ruff)"
+run = "ruff format"
+
+[tasks."fmt:check"]
+description = "Fail if anything is unformatted"
+run = "ruff format --check"
+
+[tasks.test]
+description = "Run the test suite once"
+run = "uv run --frozen pytest"
+
+[tasks.build]
+description = "Build sdist + wheel into dist/"
+run = "uv build"
+
+[tasks.check]
+# CI reaches the same gates through the prek hooks, and adds build, secrets and
+# audit on top — this is the local definition of done, not a copy of the workflow.
+description = "The full local gate — the definition of done"
+depends = ["lint", "fmt:check", "test"]
+
+[tasks.hooks]
+description = "Run every git hook against the whole repo"
+run = "prek run --all-files"
+
+[tasks.audit]
+description = "Dependency vulnerability scan against the lockfile"
+run = "osv-scanner scan source --lockfile uv.lock"
+
+[tasks.secrets]
+description = "Scan the working tree for secrets"
+run = "gitleaks dir . --redact --verbose"

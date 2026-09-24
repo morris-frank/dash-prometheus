@@ -3,3 +3,11 @@ __pycache__/
 dist/
 build/
 .venv/
+.ruff_cache/
+.pytest_cache/
+.mise/
+.DS_Store
+
+# Secrets: auto-loaded by mise, never committed.
+.env
+.env.local

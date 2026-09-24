@@ -1,30 +1,61 @@
 [project]
 name = "dash-prometheus"
 version = "2023.11.0"
-description = "A Add-On for DASH (plotly) to write out metrics for prometheus"
+description = "Prometheus metrics for Plotly Dash callbacks"
 readme = "README.md"
-requires-python = ">=3.9"
-keywords = ["dash", "prometheus", "monitoring"]
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+keywords = ["dash", "plotly", "prometheus", "monitoring"]
 authors = [{ name = "Maurice Frank", email = "mfrank@hb-dx.com" }]
 maintainers = [{ name = "Maurice Frank", email = "mfrank@hb-dx.com" }]
-
-
+classifiers = [
+  "Framework :: Dash",
+  "Programming Language :: Python :: 3",
+  "Topic :: System :: Monitoring",
+]
 dependencies = [
-    "dash>=2.9.3",
-    "prometheus-client==0.18.0"
+  "dash>=2.9.3",
+  "prometheus-client==0.18.0",
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/gitHBDX/dash-prometheus"
+Homepage = "https://github.com/morris-frank/dash-prometheus"
+Issues = "https://github.com/morris-frank/dash-prometheus/issues"
 
-# [project.scripts] # Optional
-# sample = "sample:main"
-
-# This is configuration specific to the `setuptools` build backend.
-# If you are using a different build backend, you will need to change this.
-# [tool.setuptools]
-# package-data = {"sample" = ["*.dat"]}
+[dependency-groups]
+dev = ["pytest>=8"]
 
 [build-system]
-requires = ["setuptools>=43.0.0", "wheel"]
+# 77 is the first setuptools that reads the SPDX `license` expression above.
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
+
+[tool.uv]
+required-version = ">=0.12,<0.13" # enforce the uv minor that made the lock
+# Dependency cooldown: never resolve a release younger than this. Supply-chain
+# safety margin (malicious releases usually get yanked within days). Sliding
+# window — reproducibility still comes from uv.lock + `uv sync --frozen`.
+exclude-newer = "2 weeks ago"
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+# S = bandit rules, so no separate SAST tool.
+select = ["E", "F", "W", "I", "B", "UP", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+# The package must set PROMETHEUS_MULTIPROC_DIR before prometheus_client is
+# imported, so its imports come after that setup on purpose (E402). The /tmp
+# fallback is the documented default when the variable is unset (S108).
+"src/dash_prometheus/__init__.py" = ["E402", "S108", "F401"]
+# Tests import dash_prometheus before dash on purpose; isort would reverse that (I001).
+"tests/**" = ["S101", "E402", "I001"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# dash ships a pytest plugin that imports dash at startup, which would trip the
+# package's "import dash_prometheus before dash" guard before any test runs.
+addopts = ["--strict-markers", "--strict-config", "-p", "no:dash"]

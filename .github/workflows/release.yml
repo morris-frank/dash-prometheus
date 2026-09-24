@@ -1,0 +1,65 @@
+name: Release
+
+# A pushed v<version> tag publishes that commit to PyPI. The version comes from
+# pyproject.toml; the tag only triggers, and a tag that disagrees is refused
+# because a mismatched tag is a release nobody can find.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: jdx/mise-action@v2
+        with:
+          cache: true
+
+      - run: uv sync --frozen
+
+      # Deliberately the same gate as ci.yml: nothing reaches the index that
+      # main would have rejected.
+      - run: prek run --all-files --show-diff-on-failure
+      - run: mise run test
+      - run: gitleaks dir . --redact --verbose
+      - run: mise run audit
+
+      - name: Tag must match pyproject.toml version
+        run: |
+          manifest="$(uv version --short)"
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "$manifest" != "$tag" ]; then
+            echo "pyproject.toml is $manifest but the tag is $tag" >&2
+            exit 1
+          fi
+
+      - run: mise run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  # Publishing is its own job so the OIDC token exists only where it is needed.
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    # PyPI's trusted publisher is bound to this repository, this workflow file
+    # and this environment name — rename any of them and publishing stops.
+    environment:
+      name: pypi
+      url: https://pypi.org/project/dash-prometheus/
+    permissions:
+      id-token: write # trusted publishing: no API token is stored anywhere
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - uses: pypa/gh-action-pypi-publish@release/v1

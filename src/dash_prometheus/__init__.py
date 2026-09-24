@@ -1,8 +1,7 @@
 import os
-import sys
 import shutil
+import sys
 import uuid
-
 
 if "dash" in sys.modules:
     raise RuntimeError("dash_prometheus must be imported before dash")
@@ -23,5 +22,5 @@ from prometheus_client import CollectorRegistry, multiprocess
 registry = CollectorRegistry()
 multiprocess.MultiProcessCollector(registry, path=prometheus_dir)
 
-from .middleware import add_middleware
 from .metrics import counter, histogram
+from .middleware import add_middleware
