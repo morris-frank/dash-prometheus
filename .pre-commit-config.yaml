@@ -1,0 +1,47 @@
+# Run with prek (installed via mise). These hooks ARE the lint gate: CI runs the
+# same config with `prek run --all-files`, so there is one definition of checks.
+# Local hooks use `language: system` so they call the mise-managed binaries —
+# tool versions live in mise.toml, never duplicated here.
+default_stages: [pre-commit] # without this, unstaged hooks also fire on push
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        # The 1024 px icon is the canonical source asset; keep the cap for anything else.
+        args: [--maxkb=1500]
+
+  - repo: local
+    hooks:
+      - id: ruff-format
+        name: ruff format
+        entry: ruff format
+        language: system
+        types: [python]
+
+      - id: ruff-check
+        name: ruff check (autofix)
+        entry: ruff check --fix
+        language: system
+        types: [python]
+
+      - id: gitleaks
+        name: gitleaks (staged changes)
+        entry: gitleaks git --staged --redact --verbose
+        language: system
+        pass_filenames: false
+
+      # Commit hooks already covered the static checks; push runs the suite.
+      - id: tests
+        name: pytest (full suite)
+        entry: mise run test
+        language: system
+        stages: [pre-push]
+        always_run: true
+        pass_filenames: false
