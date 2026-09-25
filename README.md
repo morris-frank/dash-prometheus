@@ -1,4 +1,4 @@
-<img src="brand/icon/icon-dash-prometheus-on-obsidian-512.png" align="left" width="128" hspace="16" alt="dash-prometheus icon">
+<img src="https://raw.githubusercontent.com/morris-frank/dash-prometheus/main/brand/icon/icon-dash-prometheus-on-obsidian-512.png" align="left" width="128" hspace="16" alt="dash-prometheus icon">
 
 <h3>dash-prometheus</h3>
 
