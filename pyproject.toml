@@ -48,9 +48,8 @@ select = ["E", "F", "W", "I", "B", "UP", "S"]
 
 [tool.ruff.lint.per-file-ignores]
 # The package must set PROMETHEUS_MULTIPROC_DIR before prometheus_client is
-# imported, so its imports come after that setup on purpose (E402). The /tmp
-# fallback is the documented default when the variable is unset (S108).
-"src/dash_prometheus/__init__.py" = ["E402", "S108", "F401"]
+# imported, so its imports come after that setup on purpose (E402).
+"src/dash_prometheus/__init__.py" = ["E402", "F401"]
 # Tests import dash_prometheus before dash on purpose; isort would reverse that (I001).
 "tests/**" = ["S101", "E402", "I001"]
 
