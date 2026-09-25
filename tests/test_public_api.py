@@ -100,3 +100,13 @@ def test_middleware_records_nothing_per_request():
     client.get("/hello")
     client.get("/metrics")
     assert generate_latest(dash_prometheus.registry) == before
+
+
+def test_import_keeps_existing_files_in_a_set_multiprocess_dir(tmp_path):
+    import subprocess
+    import sys
+
+    (tmp_path / "counter_1.db").write_bytes(b"other worker")
+    env = {**os.environ, "PROMETHEUS_MULTIPROC_DIR": str(tmp_path)}
+    subprocess.run([sys.executable, "-c", "import dash_prometheus"], env=env, check=True)
+    assert (tmp_path / "counter_1.db").read_bytes() == b"other worker"
