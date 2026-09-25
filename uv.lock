@@ -248,7 +248,7 @@ wheels = [
 
 [[package]]
 name = "dash-prometheus"
-version = "2023.11.0"
+version = "2026.9.0"
 source = { editable = "." }
 dependencies = [
     { name = "dash" },
