@@ -14,8 +14,9 @@ import-order-safe and free of anything machine-specific.
 2. **Metric names and labels are public API.** `dash_callback_calls` and
    `dash_callback_duration`, labelled `file` and `callback`, are what dashboards and alerts
    query. Renaming one is a breaking release, and the README's metric table changes with it.
-3. **Multiprocess-safe by default.** Every metric registers on the package's
-   `CollectorRegistry`, which reads the multiprocess directory, so gunicorn workers report
+3. **Multiprocess-safe by default.** Metrics register on no registry; the package's
+   `CollectorRegistry` carries only a `MultiProcessCollector` over the multiprocess
+   directory, so each sample is exposed once and gunicorn workers report
    one set of numbers.
 4. **No machine-specific paths, hosts or accounts in code.** Anything configurable is an
    argument or an environment variable with a default that works anywhere.

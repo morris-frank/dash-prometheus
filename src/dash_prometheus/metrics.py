@@ -7,18 +7,17 @@ from functools import wraps
 import dash
 from prometheus_client import Counter, Histogram
 
-from . import registry
-
-# Metric names and labels are public API: dashboards and alerts query them.
+# Metric names and labels are public API: dashboards and alerts query them. They register on
+# no registry: the package registry exposes them once, through MultiProcessCollector's files.
 _LABELS = ["file", "callback"]
 
-counter = Counter("dash_callback_calls", "Number of calls to Dash callback", _LABELS, registry=registry)
+counter = Counter("dash_callback_calls", "Number of calls to Dash callback", _LABELS, registry=None)
 histogram = Histogram(
     "dash_callback_duration",
     "Duration of Dash callback",
     _LABELS,
     buckets=(0.001, 0.01, 0.1, 1, 5, 10, 30, 60, 120, 300),
-    registry=registry,
+    registry=None,
 )
 
 _unpatched_dash_dot_callback = dash.callback
