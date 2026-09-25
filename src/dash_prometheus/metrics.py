@@ -28,14 +28,29 @@ def _measured(func):
     """Wrap ``func`` so each completed call is counted and timed; a call that raises is not."""
     labels = (inspect.getfile(func), func.__name__)
 
-    @wraps(func)
-    def wrapped(*args, **kwargs):
-        start = time.perf_counter()
-        result = func(*args, **kwargs)
+    def record(start):
         # Labelled lazily so a callback shows up in /metrics only once it has run.
         counter.labels(*labels).inc()
         histogram.labels(*labels).observe(time.perf_counter() - start)
-        return result
+
+    # Dash dispatches on inspect.iscoroutinefunction, so an async callback needs an async wrapper.
+    if inspect.iscoroutinefunction(func):
+
+        @wraps(func)
+        async def wrapped(*args, **kwargs):
+            start = time.perf_counter()
+            result = await func(*args, **kwargs)
+            record(start)
+            return result
+
+    else:
+
+        @wraps(func)
+        def wrapped(*args, **kwargs):
+            start = time.perf_counter()
+            result = func(*args, **kwargs)
+            record(start)
+            return result
 
     return wrapped
 

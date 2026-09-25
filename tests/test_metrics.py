@@ -20,3 +20,16 @@ def test_callback_calls_are_counted_and_exposed_on_metrics():
     body = app.server.test_client().get("/metrics").get_data(as_text=True)
     assert 'dash_callback_calls_total{callback="echo"' in body
     assert "dash_callback_duration_bucket" in generate_latest(dash_prometheus.registry).decode()
+
+
+def test_async_callback_stays_async_and_is_counted():
+    import asyncio
+    import inspect
+
+    @dash.callback(dash.Output("async-out", "children"), dash.Input("async-in", "n_clicks"))
+    async def async_echo(n_clicks):
+        return n_clicks
+
+    assert inspect.iscoroutinefunction(async_echo)
+    assert asyncio.run(async_echo(5)) == 5
+    assert dash_prometheus.counter.labels(__file__, "async_echo")._value.get() == 1
