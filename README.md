@@ -46,10 +46,25 @@ Histogram buckets are 1 ms, 10 ms, 100 ms, 1 s, 5 s, 10 s, 30 s, 1 min, 2 min an
 
 ## Multiple workers
 
-Metrics use `prometheus_client`'s multiprocess mode, so every gunicorn worker reports into
-one set of numbers. Set `PROMETHEUS_MULTIPROC_DIR` to choose the directory; without it, the
-package creates a fresh one under `/tmp`. Either way the directory is **emptied on import**,
-so point it at a path used for nothing else.
+Metrics use `prometheus_client`'s multiprocess mode, so workers sharing one directory report
+one set of numbers. Without `PROMETHEUS_MULTIPROC_DIR`, each process that imports the package
+gets its own fresh temporary directory: fine for a single process, or for gunicorn with
+`--preload`, where the master imports it once before forking.
+
+Otherwise set `PROMETHEUS_MULTIPROC_DIR` for all workers. The package creates it if missing but
+never empties it, since a restarting worker would erase the others' metrics. Empty it once per
+server start instead, before workers fork, for example in `gunicorn.conf.py`:
+
+```python
+import os
+import shutil
+
+
+def on_starting(server):
+    path = os.environ["PROMETHEUS_MULTIPROC_DIR"]
+    shutil.rmtree(path, ignore_errors=True)
+    os.makedirs(path)
+```
 
 ## Known limits
 
