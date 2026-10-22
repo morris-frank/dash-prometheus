@@ -6,7 +6,7 @@ min_version = "2026.7.18" # refuse to run with an older mise
 lockfile = true # write mise.lock for reproducibility
 
 [tools]
-uv = "0.12"
+uv = "0.13"
 ruff = "0.16"
 # Fast-moving security tooling and the hook runner — churn is expected, so track latest.
 gitleaks = "latest"

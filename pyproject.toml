@@ -32,11 +32,12 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [tool.uv]
-required-version = ">=0.12,<0.13" # enforce the uv minor that made the lock
+required-version = ">=0.13,<0.14" # enforce the uv minor that made the lock
 # Dependency cooldown: never resolve a release younger than this. Supply-chain
 # safety margin (malicious releases usually get yanked within days). Sliding
 # window — reproducibility still comes from uv.lock + `uv sync --frozen`.
 exclude-newer = "2 weeks ago"
+exclude-newer-package = { certifi = "2026-10-21T00:00:00Z" } # eMudhra CA revocation; drop once 2 weeks pass
 
 [tool.ruff]
 line-length = 120
